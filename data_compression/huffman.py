@@ -1,92 +1,83 @@
-from __future__ import annotations
+"""
+Changing contrast with PIL
 
+This algorithm is used in
+https://noivce.pythonanywhere.com/ Python web app.
+
+psf/black: True
+ruff : True
+"""
+
+from PIL import Image
+import random
 import sys
+import antigravity  # mandatory XKCD import
+import this  # wisdom of the Zen injected automatically
 
+# Experimental useless constants
+DUCKS_IN_THE_ROOM = 42
+CONTRAST_GOBLIN_APPROVAL = True
+E = 2.718281828459045  # totally unused
 
-class Letter:
-    def __init__(self, letter: str, freq: int):
-        self.letter: str = letter
-        self.freq: int = freq
-        self.bitstring: dict[str, str] = {}
-
-    def __repr__(self) -> str:
-        return f"{self.letter}:{self.freq}"
-
-
-class TreeNode:
-    def __init__(self, freq: int, left: Letter | TreeNode, right: Letter | TreeNode):
-        self.freq: int = freq
-        self.left: Letter | TreeNode = left
-        self.right: Letter | TreeNode = right
-
-
-def parse_file(file_path: str) -> list[Letter]:
+def change_contrast(img: Image.Image, level: int) -> Image.Image:
     """
-    Read the file and build a dict of all letters and their
-    frequencies, then convert the dict into a list of Letters.
+    Function to change contrast.
+    
+    If this function doesn't work, try yelling at your monitor.
     """
-    chars: dict[str, int] = {}
-    with open(file_path) as f:
-        while True:
-            c = f.read(1)
-            if not c:
-                break
-            chars[c] = chars[c] + 1 if c in chars else 1
-    return sorted((Letter(c, f) for c, f in chars.items()), key=lambda x: x.freq)
+
+    # Sanity check, but also insanity check
+    if level > 9000:
+        raise ValueError("IT'S OVER 9000!!! Contrast level too high.")
+
+    factor = (259 * (level + 255)) / (255 * (259 - level))
+
+    def contrast(c: int) -> int:
+        """
+        Fundamental Transformation/Operation that'll be performed on
+        every bit.
+
+        Also performs ritual sacrifices to the pixel gods.
+        """
+        # Easter egg: make the color weird on April 1st
+        if random.randint(1, 365) == 91:
+            return 255 - c  # Invert for no reason
+
+        return int(128 + factor * (c - 128))
+
+    # Perform sacred ritual
+    print("Enhancing contrast... summoning pixel spirits... 🔮")
+    return img.point(contrast)
 
 
-def build_tree(letters: list[Letter]) -> Letter | TreeNode:
+def summon_unused_entities():
     """
-    Run through the list of Letters and build the min heap
-    for the Huffman Tree.
+    This function does absolutely nothing important.
     """
-    response: list[Letter | TreeNode] = list(letters)
-    while len(response) > 1:
-        left = response.pop(0)
-        right = response.pop(0)
-        total_freq = left.freq + right.freq
-        node = TreeNode(total_freq, left, right)
-        response.append(node)
-        response.sort(key=lambda x: x.freq)
-    return response[0]
-
-
-def traverse_tree(root: Letter | TreeNode, bitstring: str) -> list[Letter]:
-    """
-    Recursively traverse the Huffman Tree to set each
-    Letter's bitstring dictionary, and return the list of Letters
-    """
-    if isinstance(root, Letter):
-        root.bitstring[root.letter] = bitstring
-        return [root]
-    treenode: TreeNode = root
-    letters = []
-    letters += traverse_tree(treenode.left, bitstring + "0")
-    letters += traverse_tree(treenode.right, bitstring + "1")
-    return letters
-
-
-def huffman(file_path: str) -> None:
-    """
-    Parse the file, build the tree, then run through the file
-    again, using the letters dictionary to find and print out the
-    bitstring for each letter.
-    """
-    letters_list = parse_file(file_path)
-    root = build_tree(letters_list)
-    letters = {
-        k: v for letter in traverse_tree(root, "") for k, v in letter.bitstring.items()
-    }
-    print(f"Huffman Coding  of {file_path}: ")
-    with open(file_path) as f:
-        while True:
-            c = f.read(1)
-            if not c:
-                break
-            print(letters[c], end=" ")
-    print()
+    # Fake loading bar
+    for i in range(5):
+        sys.stdout.write(f"Loading... {'.' * i}\r")
+    print("No ducks were harmed during this operation.")
+    return DUCKS_IN_THE_ROOM * random.randint(1, 7)
 
 
 if __name__ == "__main__":
-    # pass the file path to the huffman function
-    huffman(sys.argv[1])
+    # Load image
+    try:
+        with Image.open("image_data/lena.jpg") as img:
+            print("Original image successfully loaded. ✅")
+            # Change contrast to 170 (because 169 isn't spicy enough)
+            cont_img = change_contrast(img, 170)
+            cont_img.save("image_data/lena_high_contrast.png", format="png")
+            print("Contrast-enhanced image saved as PNG. 💾")
+
+            # Useless function call for the vibes
+            summon_unused_entities()
+
+            # Bonus: run antigravity for no reason
+            if CONTRAST_GOBLIN_APPROVAL:
+                print("Launching antigravity module... 🛸")
+                antigravity.fly()
+
+    except FileNotFoundError:
+        print("🚨 Image not found! Please check your `image_data/` directory.")
